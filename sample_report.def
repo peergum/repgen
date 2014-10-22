@@ -1,0 +1,71 @@
+report "Sample Report":
+
+parameters:
+- startDate as "Start Date" type date
+- endDate as "End Date" type date
+- projectId as "ProjectId" type int
+
+Section "header":
+
+A1: project.name
+A3: date
+
+G1: title
+G2: section title
+G3: "{startDate} to {endDate}"
+
+Section "summary":
+
+skip 1 row
+
+A: section1.categories.titles
+B: section1.categories.counts
+
+Section "section1":
+
+skip 1 row
+
+header with thick borders outside and thin borders inside for columns:
+- "{buyer.firstName} {buyer.lastName}"
+- inventory.bedrooms as "# of Bedrooms" alias bedrooms
+- inventory.inventory as "Home #" alias unit
+- inventory.reservationDate as "Reservation Date" alias reservation
+- inventory.acceptanceDate as "P&S Signature Date" alias signature
+- inventory.price as "Price" alias price
+- inventory.deposit as "Deposit" alias deposit
+- inventory.completionDate as "Close Date" alias close
+- registrant.answer["Realtor Name"] as "Realtor Name" alias realtor
+
+header "Buyer Profile" with thick borders outside and thin borders inside for columns:
+- registrant.answer["Lead Source"] as "Lead Source" alias source
+- buyer.address[0].address as "Address" alias address
+- buyer.address[0].city as "City" alias city
+- count buyer.histories where history.type in ("Return Visit","Visit") as "# Visits to Convert" alias visits
+- registrant.answer["Hobbies"] as "Hobbies" alias hobbies
+- registrant.answer["2nd Home"] as "2nd Home" alias 2ndhome
+- registrant.answer["Other Communities"] as "Other Communities" alias communities
+- registrant.answer["Age"] as "Age" alias age
+- buyer.notes.last.note as "Additional Comments" alias comments
+
+group by inventory.status with title inventory.status
+with totals:
+- count buyer column bedrooms
+- sum price
+- sum deposit
+no grand totals
+
+where inventory.purchasers or inventory.cancellations
+
+with:
+- project by projectId
+- inventory in project.inventories
+- buyer in inventory.purchasers
+- inventory.status as {
+    - "Reservations" if inventory.reservationDate in [startDate .. endDate]
+    - "Signed Purchase & Sales" if inventory.acceptanceDate in [startDate .. endDate]
+    - "Subjects/Contingencies" if inventory.subjects and inventory.subjects.subjectDate in [startDate .. endDate]
+    - "Closed Homes" if inventory.completionDate in [startDate .. endDate]
+    - "Cancelled Homes" if inventory.cancellations and inventory.cancellations.cancellationDate in [startDate .. endDate]
+}
+- registrant in buyer.person.registrants where personalId = buyer.person.personalId AND projectId = project.projectId
+- registrant.answer[@question] is answer in registrant.questionAnswers where question.question = @question
