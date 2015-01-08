@@ -3,6 +3,8 @@ repgen
 
 Report Generator for various languages
 
+_UPDATE_: this project is currently in standby and might be somehow cancelled in the future, for it's using lex/yacc in C and I'm currently working on a Go lex/yacc so that the whole report generator could be written in Go instead.
+
 _important_:
 
 * This is totally experimental at this point
